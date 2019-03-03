@@ -2,13 +2,14 @@
 
 # A tiny CGI server 
 
-# Subclass CGITTPREquestHandler to properly return "Status: XXX" headers and
-# non-zero script exit codes.
-import BaseHTTPServer, CGIHTTPServer
-import sys, os, getopt
+# Subclass CGITTPREquestHandler to properly return "Status: XXX" headers or
+# status 500 if a cgi script has non-zero exit status or writes to stderr
+import BaseHTTPServer
 from CGIHTTPServer import CGIHTTPRequestHandler
 from cStringIO import StringIO
+import sys, os, getopt, re
 
+# die with a message
 def die(format, *args):
     sys.stderr.write((format+"\r\n") % args)
     sys.exit(1)
@@ -16,67 +17,59 @@ def die(format, *args):
 class mycgi(CGIHTTPRequestHandler):
     # no special treatment for *.py
     def is_python(self, path):
-        return False;
+        return False
   
-    # treat every file as a cgi
+    # never return file content
     def is_cgi(self):
         self.cgi_info = '', self.path[1:]
         return True
 
-    # log to stdout if not quiet
+    # swallow logs if quiet
     def log_message(self, format, *args):
         if not self.quiet: 
-            CGIHTTPRequestHandler.log_message(self, format, *args);
+            CGIHTTPRequestHandler.log_message(self, format, *args)
 
-    # remember if log_error was invoked
+    # remember first log_error, so stderr output error has priority over exit code
     def log_error(self, format, *args):
-        self.error_string=format%args;
-        self.log_message(self, format, *args);
+        if self.logged is None:
+            self.logged=(format%args).strip()
+        self.log_message(self, format, *args)
         
-    # write custom result header
-    def wresult(self, s):
-        self.wsave.write('%s %s\r\n' % (self.protocol_version, s))
-
     def run_cgi(self):
-        # change file output to StringIO
-        self.wsave=self.wfile                 
+        self.wsave=self.wfile                               # replace output file with stringIO 
         self.wfile=StringIO()                     
-        self.have_fork=False # CGI must run within this process                    
-        self.error_string=None                  
-        CGIHTTPRequestHandler.run_cgi(self)    
+        self.have_fork=False                                # force cgi to run with popen
+        self.logged=None                                    # assume no errors will be logged
+        CGIHTTPRequestHandler.run_cgi(self)                 
         self.wfile.seek(0)                    
-        # get result status from first line
-        status=self.wfile.readline().split(' ')[1].strip();
-        # remember possible rewind position
-        rewind=self.wfile.tell()
-        if status != '200':
-            # result is already an error, return verbatim output
-            rewind=0
-        elif self.error_string is not None:
-            # run_cgi invoked log_error, return with status 500 
-            self.wresult('500 '+self.error_string)
-        else:
-            # scan headers for Status: something
-            for line in self.wfile:
-                if line.strip() == '': 
-                    # Not found, return verbatim output
-                    rewind=0
-                    break
-                if line.startswith('Status:'):
-                    # Found Status: something, return it instead
-                    self.wresult(line.split(':')[1].strip())
-                    break
+        status=self.wfile.readline()                        # get status line
+        rewind=self.wfile.tell()                            # remember rewind position
+        if status.split(' ')[1].strip() == '200':           # if 'normal' exit
+            if self.logged is not None:
+                # run_cgi invoked log_error, return as status 500 
+                status='%s 500 %s\r\n' % (self.protocol_version, self.logged)
             else:
-                # ugh, no line break in output
-                self.wresult('500 invalid output')
-                
+                # scan headers
+                for line in self.wfile:
+                    if line.strip() == '': 
+                        # end of headers
+                        break
+                    if not re.match('^\S+:.*\S',line):
+                        # require form 'key: value'
+                        status=self.protocol_version + ' 500 malformed header\r\n'
+                        break;
+                    if line.startswith('Status:'):
+                        # if 'Status: something', use it
+                        status='%s %s\r\n' % (self.protocol_version, line.split(':',1)[1].strip())
+        
         self.wfile.seek(rewind)
+        self.wsave.write(status)
         self.wsave.write(self.wfile.read())
 
 # parse options
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'r:p:b:l')
-    if len(args): raise Exception
+    opts, args = getopt.getopt(sys.argv[1:],'d:p:b:l')
+    assert len(args)==0
 except:
     die("""Usage:
 
@@ -84,19 +77,19 @@ except:
 
 Serve cgi scripts via http. Where options are:
 
-    -r root - serve specified root directory, default is current directory
-    -p port - listen on specfied port, default is 8000
-    -b addr - bind to specified ip address, default is bind to all addresses
-    -l      - enable logging to stdout
+    -d directory    - directory to serve files from, default is current directory
+    -p port         - port to listen on, default is 8000
+    -b ad.dr.es.s   - IP address to bind to, default is don't bind
+    -l              - enable logging on stdout
 """)
 
-handler=mycgi;
+handler=mycgi
 handler.quiet=True
 
 bind=""
 port=8000
 for opt, arg in opts:
-    if opt == '-r': 
+    if opt == '-d': 
         try:
             os.chdir(arg)
         except:
@@ -105,18 +98,18 @@ for opt, arg in opts:
     if opt == '-p': 
         try:
             port=int(arg)
-            if not 0<port<65536: raise Exception
+            assert 0<port<65536
         except:
             die("Invalid port '%s'", arg)
     
     if opt == '-b':
         bind=arg
         try:
-            if bind.count(".") != 3: raise Exception
+            assert bind.count(".") == 3
             for octet in bind.split('.'):
-                if not 0<=int(octet)<=255: raise Exception
+                assert 0<=int(octet)<=255
         except:
-            die("Invalid bind address '%s'", arg);
+            die("Invalid bind address '%s'", arg)
 
     if opt == '-l':
         handler.quiet=False

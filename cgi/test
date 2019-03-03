@@ -1,0 +1,5 @@
+#!/bin/bash
+# Dump the CGI environment
+
+printf "Content-type: text/plain\n\n"
+set
