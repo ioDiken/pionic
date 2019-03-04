@@ -1,0 +1,53 @@
+#!/bin/bash -u
+
+# Manipulate GPIOs. Usage:
+#
+#  curl -f "http://pion/gpio?NN=op[...&NN=op]"
+#
+# Where NN is a GPIO number 2 to 27, and "op" can be:
+#
+#   0       - set the GPIO to an output and make it low
+#   1       - set the GPIO to output and make it high
+#   input   - set the GPIO to input and return "NN=0" or "NN=1"
+#
+# Multiple GPIOs are processed in order specified. An error will cause the
+# script to abort with some gpios already processed. 
+
+die() { echo $* >&2; exit 1; }
+
+# if QUERY_STRING exists, use as command line 
+[[ ${QUERY_STRING:-} ]] && { OFS=$IFS; IFS='&'; set -- $QUERY_STRING; IFS=$OFS; }                                                                                                                                                        
+
+sys=/sys/class/gpio
+[ -d $sys ] || die "User-mode GPIOs not supported"
+
+# set gpio $1 direction to $2, or die
+direction() 
+{ 
+    [ -d $sys/gpio$1 ] || echo $1 > $sys/export
+    greq -q $2 $sys/gpio$1/direction || echo $2 > $sys/gpio$1/direction || die "Can't set gpio$gpio direction"
+}
+
+(($#)) || die "Nothing to do!"
+
+printf "Content-type: text/plain\n\n"
+
+for query in "$@"; do
+    [[ $query =~ ^([0-9]+)=(.*) ]] || die "Invalid query '$query'"
+
+    gpio=${BASH_REMATCH[1]}
+    op=${BASH_REMATCH[2]}
+
+    case "$op" in
+        0|1)
+            direction $1 out
+            echo $op > $sys/gpio$1/value || die "Can't set gpio$gpio to $op"
+            ;;
+        
+        in*) 
+            direction $1 in
+            v=$(cat $sys/gpio/gpio$1/value)|| die "Can't get gpio$gpio value"
+            echo "$gpio=$value"
+            ;;
+    esac
+done
