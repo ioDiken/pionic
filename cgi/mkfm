@@ -1,25 +1,36 @@
 #!/bin/bash -ue
 
-# curl http://172.31.255.1/cgi/mkfm?XXX.X[&timeout]
+source ${0%/*}/cgi.inc
 
-die() { echo "$*" >&1; exit 1; }
-
-source cgi.inc
-
-printf "Content-type: text/plain\n\n"
+usage="/
+Usage:
+    mkfm [options]
+    -or-
+    curl http://172.31.255.1/cgi/mkfm[?options&options...]
+Options are:
+    mhz=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
+    tone=X    - modulation frequency in Hz, 10-8000, default is 1000
+    time=X    - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
+"
 
 runfor=../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
 sox=$(type -P sox) || die "Need executable sox"
 xmit=../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
 
-freq=${1:-99.9}
-timeout=${2:-30}
+freq=99.9
+tone=1000
+time=30
 
-echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 88.1 && $1 <= 107.9)}' || die "Invalid frequency '$frequency'"
-echo $timeout | awk '{exit $1 < 5 || $1 > 60}' || die "Invalid timeout '$timeout'"
+(($#)) && for a in "$@"; do case $a in
+    freq=*) freq=${a#*=}; echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 88.1 && $1 <= 107.9)}' || die "Invalid frequency '$freq'";;
+    tone=*) tone=${a#*=}; echo $tone | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 10 && $1 <= 8000)}' || die "Invalid tone '$tone'";;
+    time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$tone'";;
+    *) die "$usage"
+esac; done    
 
-exec 2>&1
 pkill -f $xmit || true
-echo "Transmitting $freq MHz for $timeout seconds"
-# background from subshell or cgiserver will stall
-( $runfor $timeout bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine 1000 | $xmit -f $freq -" & ) &>/dev/null
+if ((time)); then
+    echo "Transmitting $tone Hz on $freq MHz for $time seconds"
+    # background from subshell or cgiserver will stall
+    ( $runfor $time bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone | $xmit -f $freq -" & ) &>/dev/null
+fi  

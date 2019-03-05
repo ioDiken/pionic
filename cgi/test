@@ -3,8 +3,11 @@
 
 source cgi.inc
 
-printf "Content-type: text/plain\n\n"
-
 set
+
 echo -------------------------------
-echo Command line: $*
+
+if (($#)); then
+    echo Arguments:
+    printf "  %s\n" "$@"
+fi    

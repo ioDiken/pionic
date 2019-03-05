@@ -2,6 +2,9 @@
 # This runs at boot, start test station operation
 # It can also be run manually to restart all services
 
+# factory server address, change this if needed
+factory_server=10.2.3.4:8000
+
 set -ue; trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 
 die() { echo "$*" >&2; exit 1; }
@@ -10,11 +13,11 @@ die() { echo "$*" >&2; exit 1; }
 beacon=~pi/pionic/beacon/beacon
 [ -x $beacon ] || die "Need executable $beacon"
 
-cgiserver=~pi/pionic/cgiserver.py
+cgiserver=~pi/pionic/cgiserver
 [ -x $cgiserver ] || die "Need executable $cgiserver"
 
 
-case "${1:-}" in
+case "${1:-start}" in
     start)
         # Factory is attached to eth0, DUT is attached to eth1 via usb ethernet dongle
         # The factory interface gets an address via DHCP, the DUT interace is static
@@ -30,11 +33,11 @@ case "${1:-}" in
         iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 2222 -j DNAT --to 172.31.255.2:22
         # iptables -A FORWARD -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT  
 
-        # Start the beacon server on eth1, the payload tells DUT what address to use
-        # and the ip:port of the test controller cgi interface.
-        $beacon send eth1 "172.31.255.2/24 172.31.255.1:80" &
+        # Start the beacon server on eth1, the payload contains the factory
+        # server address and port.
+        $beacon send eth1 $factory_server &
 
-        # Start cgi server
+        # Start cgi server, bind to eth1
         #$cgiserver -b 172.31.255.1 -p 80 -d cgi &
         $cgiserver -p 80 -d ~pi/pionic/cgi &
 
@@ -43,7 +46,7 @@ case "${1:-}" in
 
     stop)
         pkill -f beacon || true
-        pkill -f cgiserver.py || true
+        pkill -f cgiserver || true
         ip a flush eth1 
         ip l set eth1 down
         echo 0 > /proc/sys/net/ipv4/ip_forward

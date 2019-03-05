@@ -73,9 +73,9 @@ try:
 except:
     die("""Usage:
 
-    cgiserver.py [options]
+    cgiserver [options]
 
-Serve cgi scripts via http. Where options are:
+Serve cgi scripts via http. Options are:
 
     -d directory    - directory to serve files from, default is current directory
     -p port         - port to listen on, default is 8000
