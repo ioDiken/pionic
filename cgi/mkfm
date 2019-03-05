@@ -1,0 +1,25 @@
+#!/bin/bash -ue
+
+# curl http://172.31.255.1/cgi/mkfm?XXX.X[&timeout]
+
+die() { echo "$*" >&1; exit 1; }
+
+source cgi.inc
+
+printf "Content-type: text/plain\n\n"
+
+runfor=../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
+sox=$(type -P sox) || die "Need executable sox"
+xmit=../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
+
+freq=${1:-99.9}
+timeout=${2:-30}
+
+echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 88.1 && $1 <= 107.9)}' || die "Invalid frequency '$frequency'"
+echo $timeout | awk '{exit $1 < 5 || $1 > 60}' || die "Invalid timeout '$timeout'"
+
+exec 2>&1
+pkill -f $xmit || true
+echo "Transmitting $freq MHz for $timeout seconds"
+# background from subshell or cgiserver will stall
+( $runfor $timeout bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine 1000 | $xmit -f $freq -" & ) &>/dev/null

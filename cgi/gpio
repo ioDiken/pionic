@@ -13,10 +13,9 @@
 # Multiple GPIOs are processed in order specified. An error will cause the
 # script to abort with some gpios already processed. 
 
-die() { echo $* >&2; exit 1; }
+source cgi.inc
 
-# if QUERY_STRING exists, use as command line 
-[[ ${QUERY_STRING:-} ]] && { OFS=$IFS; IFS='&'; set -- $QUERY_STRING; IFS=$OFS; }                                                                                                                                                        
+die() { echo $* >&2; exit 1; }
 
 sys=/sys/class/gpio
 [ -d $sys ] || die "User-mode GPIOs not supported"
