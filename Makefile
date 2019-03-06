@@ -5,7 +5,7 @@ default:; @echo Must not be root!; false
 
 else
 default: beacon runfor FM_Transmitter_RPi3
-	sudo sed -i "/pionic/d; /exit/ i su pi -c '/home/pi/pionic/start.sh &'" /etc/rc.local
+	sudo sed -i "/pionic/d; /^exit/i /home/pi/pionic/pionic.sh start" /etc/rc.local
 
 beacon:
 	git clone https://github.com/glitchub/$@
@@ -22,5 +22,6 @@ FM_Transmitter_RPi3:
 endif
 
 clean:
+	sudo ./pionic.sh stop
 	rm -rf beacon runfor FM_Transmitter_RPi3
 	sudo sed -i "/pionic/d" /etc/rc.local

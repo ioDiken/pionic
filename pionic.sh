@@ -10,15 +10,12 @@ set -ue; trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 die() { echo "$*" >&2; exit 1; }
 ((UID==0)) || die "Must be root!"
 
-beacon=~pi/pionic/beacon/beacon
-[ -x $beacon ] || die "Need executable $beacon"
-
-cgiserver=~pi/pionic/cgiserver
-[ -x $cgiserver ] || die "Need executable $cgiserver"
-
 
 case "${1:-start}" in
     start)
+        beacon=~pi/pionic/beacon/beacon; [ -x $beacon ] || die "Need executable $beacon"
+        cgiserver=~pi/pionic/cgiserver; [ -x $cgiserver ] || die "Need executable $cgiserver"
+
         # Factory is attached to eth0, DUT is attached to eth1 via usb ethernet dongle
         # The factory interface gets an address via DHCP, the DUT interace is static
         ip l set eth1 up
@@ -40,8 +37,6 @@ case "${1:-start}" in
         # Start cgi server, bind to eth1
         #$cgiserver -b 172.31.255.1 -p 80 -d cgi &
         $cgiserver -p 80 -d ~pi/pionic/cgi &
-
-        echo "$0 has been started"
         ;;
 
     stop)
@@ -51,7 +46,6 @@ case "${1:-start}" in
         ip l set eth1 down
         echo 0 > /proc/sys/net/ipv4/ip_forward
         iptables -F; iptables -X; iptables -t nat -F
-        echo "$0 has been stopped"
         ;;
        
     res*) 
@@ -60,4 +54,6 @@ case "${1:-start}" in
         ;;
 
     *) die "Usage: $0 stop|start|restart"
-esac    
+esac   
+true
+
