@@ -1,8 +1,9 @@
 #!/bin/bash 
 source ${0%/*}/cgi.inc
 
-usage="/
-Usage:
+((!UID)) || die "Must be root!"
+
+usage="Usage:
     
     gpio [options]
     -or-
@@ -39,28 +40,31 @@ direction()
 }
 
 for opt in "$@"; do
-
-    if [[ $opt == di* ]]; then
-        for g in $(enabled); do
-          echo $g > $sys/unexport
-        done
-        continue
-    fi    
-    
-    [[ $opt =~ ^([0-9]+)=(.+) ]] || die "Invalid option '$opt'"
-
-    gpio=${BASH_REMATCH[1]}
-    op=${BASH_REMATCH[2]}
-
-    case "$op" in
-        0|1) direction $gpio out; echo $op > $sys/gpio$gpio/value;;
-        in*) direction $gpio in;;
-        di*) [ -d $sys/gpio$gpio ] && echo $gpio > $sys/unexport;;
-        *) die "Invalid option '$opt'";;
-    esac
+    case "$opt" in
+        res*|dis*) 
+            for g in $(enabled); do echo $g > $sys/unexport; done
+            ;;
+        *) 
+            [[ $opt =~ ^([0-9]+)=(.+) ]] || die "Invalid option '$opt'"
+            gpio=${BASH_REMATCH[1]}
+            ((gpio > 1 && gpio <= 27)) || die "Can't use gpio $gpio";
+            op=${BASH_REMATCH[2]}
+            case "$op" in
+                0|1) 
+                    direction $gpio out; echo $op > $sys/gpio$gpio/value
+                    ;;
+                in*) 
+                    direction $gpio in
+                    ;;
+                dis*|res*) 
+                    [ -d $sys/gpio$gpio ] && echo $gpio > $sys/unexport
+                    ;;
+                *) 
+                    die "Invalid option '$opt'"
+                    ;;
+            esac
+            ;;
+    esac        
 done
 
-shopt -s nullglob
-gpios=$(enabled)
-[[ $gpios ]] || die "No gpios enabled"
-for g in $gpios; do echo $g: $(cat $sys/gpio$g/direction $sys/gpio$g/value); done    
+for g in $(enabled); do echo $g: $(cat $sys/gpio$g/direction $sys/gpio$g/value); done    

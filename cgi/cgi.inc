@@ -5,7 +5,7 @@ set -o pipefail -o errexit -o nounset
 trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 
 # split QUERY_STRING to command line
-[[ ${QUERY_STRING:-} ]] && { OFS=$IFS; IFS='&'; set -- $QUERY_STRING; IFS=$OFS; }
+[[ -v QUERY_STRING ]] && { OFS=$IFS; IFS='&'; set -- $QUERY_STRING; IFS=$OFS; }
 
 # unescape + and %xx... is there a better way?
 o=("$@")

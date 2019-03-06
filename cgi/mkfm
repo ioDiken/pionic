@@ -1,13 +1,16 @@
 #!/bin/bash -ue
-
 source ${0%/*}/cgi.inc
 
-usage="/
-Usage:
+((!UID)) || die "Must be root!"
+
+usage="Usage:
+
     mkfm [options]
     -or-
-    curl http://172.31.255.1/cgi/mkfm[?options&options...]
+    curl http://172.31.255.1/cgi/mkfm[?option[&option...]]
+
 Options are:
+
     mhz=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
     tone=X    - modulation frequency in Hz, 10-8000, default is 1000
     time=X    - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
@@ -25,12 +28,15 @@ time=30
     freq=*) freq=${a#*=}; echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 88.1 && $1 <= 107.9)}' || die "Invalid frequency '$freq'";;
     tone=*) tone=${a#*=}; echo $tone | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 10 && $1 <= 8000)}' || die "Invalid tone '$tone'";;
     time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$tone'";;
-    *) die "$usage"
+    *) exit 1 # die "$usage"
 esac; done    
 
 pkill -f $xmit || true
 if ((time)); then
     echo "Transmitting $tone Hz on $freq MHz for $time seconds"
-    # background from subshell or cgiserver will stall
-    ( $runfor $time bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone | $xmit -f $freq -" & ) &>/dev/null
+    (
+        # close popen'd stdio or cgiserver will stall
+        exec 0</dev/null 1>/dev/null 2>&1 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+        $runfor $time bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone | $xmit -f $freq -"
+    ) &
 fi  

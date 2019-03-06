@@ -8,6 +8,6 @@ set
 echo -------------------------------
 
 if (($#)); then
-    echo Arguments:
+    echo $# arguments:
     printf "  %s\n" "$@"
 fi    
