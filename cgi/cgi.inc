@@ -1,7 +1,7 @@
 # source this file at top of a cgi
 
 # abort on command error or undefined variable
-set -o pipefail -o errexit -o nounset
+set -o pipefail -E -u
 trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 
 # split QUERY_STRING to command line

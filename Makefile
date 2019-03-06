@@ -17,7 +17,7 @@ runfor:
 
 FM_Transmitter_RPi3:
 	sudo apt install sox
-	git clone https://github.com/PNPtutorials/$@
+	git clone https://github.com/glitchub/$@
 	make -C $@
 endif
 

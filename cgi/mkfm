@@ -1,4 +1,4 @@
-#!/bin/bash -ue
+#!/bin/bash
 source ${0%/*}/cgi.inc
 
 ((!UID)) || die "Must be root!"
@@ -16,9 +16,9 @@ Options are:
     time=X    - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
 "
 
-runfor=../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
+runfor=${0%/*}/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
 sox=$(type -P sox) || die "Need executable sox"
-xmit=../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
+xmit=${0%/*}/../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
 
 freq=99.9
 tone=1000
@@ -36,7 +36,7 @@ if ((time)); then
     echo "Transmitting $tone Hz on $freq MHz for $time seconds"
     (
         # close popen'd stdio or cgiserver will stall
-        exec 0</dev/null 1>/dev/null 2>&1 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
-        $runfor $time bash -c "$sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone | $xmit -f $freq -"
-    ) &
+        exec 0</dev/null 1>/dev/tty 2>&1 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+        $runfor $time $xmit -f $freq - < <($sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone) 
+    ) & 
 fi  
