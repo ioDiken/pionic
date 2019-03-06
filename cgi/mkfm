@@ -1,4 +1,5 @@
 #!/bin/bash
+
 source ${0%/*}/cgi.inc
 
 ((!UID)) || die "Must be root!"
@@ -33,10 +34,9 @@ esac; done
 
 pkill -f $xmit || true
 if ((time)); then
-    echo "Transmitting $tone Hz on $freq MHz for $time seconds"
-    (
-        # close popen'd stdio or cgiserver will stall
-        exec 0</dev/null 1>/dev/tty 2>&1 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
-        $runfor $time $xmit -f $freq - < <($sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone) 
-    ) & 
+    echo "Transmitting $tone Hz on $freq MHz FM for $time seconds"
+    # close popen'd stdio or cgiserver will stall
+    [ -t 1 ] || exec 0<&- 1>&- 2>&- 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+    # Note must kill fm_transmitter with SIGINT aka signal 2
+    $runfor -s2 $time $xmit -f $freq - < <($sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone) &
 fi  
