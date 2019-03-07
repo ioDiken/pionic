@@ -1,11 +1,14 @@
 # source this file at top of a cgi
 
+# point filehandle 9 at stderr, then stderr at stdin
+exec 9>&2 2>&1
+
 # abort on command error or undefined variable
 set -o pipefail -E -u
-trap 'echo $0: line $LINENO: exit status $? >&2' ERR
+trap 'echo "$0: line $LINENO: exit status $?" >&9; exit 1' ERR
 
 # split QUERY_STRING to command line
-[[ -v QUERY_STRING ]] && { OFS=$IFS; IFS='&'; set -- $QUERY_STRING; IFS=$OFS; }
+[[ -v QUERY_STRING ]] && { IFS='&'; set -- $QUERY_STRING; IFS=$' \t\n'; }
 
 # unescape + and %xx... is there a better way?
 o=("$@")
@@ -16,10 +19,8 @@ done
 set -- "${o[@]}"
 unset n o p
 
-# point filehandle 9 at stderr, then stderr at stdin 
-exec 9>&2 2>&1
-
 # crreate die function that uses fh9
 die() { echo "$*" >&9; exit 1; }
 
-printf "Content-type: text/plain\n\n"
+# output Content-type header if invoked via cgiserver
+[[ -v GATEWAY_INTERFACE ]] && printf "Content-type: text/plain\n\n"
