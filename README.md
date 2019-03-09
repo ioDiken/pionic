@@ -1,4 +1,4 @@
-Pionic - An RPI-based factory test station controller
+Pionic - an RPI-based factory test station controller
 
 Physical configuration:
 
@@ -31,8 +31,6 @@ To install:
 
     Attach monitor and usb keyboard, log in as user 'pi', password 'raspberry'
 
-    Attach ethernet, sudo apt update && sudo apt upgrade
-
     sudo raspi-config:
 
         Change User Password:
@@ -48,29 +46,32 @@ To install:
 
             SSH: Yes
             VNC: No
-            Serial: Yes (if desired)
+            I2C: Yes
+            Serial: Yes
 
         Advanced Options:
 
-            Expand Filesystem: yes
-            Memory split: 16Mb
+            Memory split: 0
 
-    git clone https://github.com/glitchub/pionic
-    make -C pionic
-
-    Edit pionic/start.sh to set the factory server address and port, default is
-    "10.2.3.4:80" which is almost certainly wrong.
-
-    If serial terminal will be used, recommend appending to ~/.bashrc:
+    Append to ~/.bashrc:
         
         alias resize='shopt -s checkwinsize; (IFS="[;"; printf "\e7\e[r\e[999;999H\e[6n\e8"; read -s -t1 -dR x r c && stty rows $r cols $c) <> /dev/tty'
         resize
-        
-    This will tell bash the size of the terminal window, works with putty, mintty, etc.
+    
+    (This tells bash to size of the terminal window, use 'resize' command as needed when it changes.)
+    
+    Attach ethernet, wait for IP to come up.
+    
+    sudo apt update
+    sudo apt upgrade
+    sudo apt install git
+    git clone https://github.com/glitchub/pionic
+    make -C pionic
 
-Reboot, pionic will start. Note it can be manually started, restarted, or stopped with:
+    Edit pionic/pionic.sh to set the factory server address and port, default is
+    "10.2.3.4:80" which is almost certainly wrong.
 
-    sudo pionic/start
-    sudo pionic/start restart
-    sudo pionic/start stop
-
+    Make sure ethernet dongle is attached to USB, then reboot. 
+    
+    SSH to the device's IP address and run 'curl http://localhost/test' to
+    check that cgiserver is running (you will see the server's environment).
