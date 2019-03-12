@@ -14,7 +14,7 @@ trap 'echo "$0: line $LINENO: exit status $?" >&9; exit 1' ERR
 o=("$@")
 for ((n=0; n<${#o[@]}; n++)); do
     p=${o[$n]//+/ }
-    o[n]=$(echo -e ${p//%/\\x}) 
+    o[n]=$(echo -e ${p//%/\\x})
 done
 set -- "${o[@]}"
 unset n o p
@@ -23,4 +23,5 @@ unset n o p
 die() { echo "$*" >&9; exit 1; }
 
 # output Content-type header if invoked via cgiserver
+>>>>>>> Stashed changes
 [[ -v GATEWAY_INTERFACE ]] && printf "Content-type: text/plain\n\n"

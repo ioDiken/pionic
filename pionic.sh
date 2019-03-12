@@ -18,7 +18,7 @@ case "${1:-start}" in
 
         # Factory is attached to eth0, DUT is attached to eth1 via usb ethernet dongle
         # The factory interface gets an address via DHCP, the DUT interace is static
-        ip l set eth1 up
+        ip l set eth1 up || die "No eth1 device" 
         ip a a dev eth1 172.31.255.1/24
         
         # NAT the DUT to the factory
@@ -37,6 +37,14 @@ case "${1:-start}" in
         # Start cgi server, bind to eth1
         #$cgiserver -b 172.31.255.1 -p 80 -d cgi &
         $cgiserver -p 80 -d ~pi/pionic/cgi &
+
+	# use the console for test output
+	systemctl stop getty@tty1.service
+	setterm --cursor off > /dev/tty1
+	dmesg -n 1
+
+        sleep 2
+        $0 show
         ;;
 
     stop)
@@ -46,12 +54,23 @@ case "${1:-start}" in
         ip l set eth1 down
         echo 0 > /proc/sys/net/ipv4/ip_forward
         iptables -F; iptables -X; iptables -t nat -F
+        cat /dev/zero > /dev/fb0 2>/dev/null || true
         ;;
        
     res*) 
         $0 stop
         $0 start
         ;;
+
+    show)
+        curl --data-binary @- 'http://localhost/display?command=text&fg=yellow&bg=blue&point=50' <<EOT
+PIONIC is alive!
+ETH0 MAC: $(cat /sys/class/net/eth0/address) 
+ETH1 MAC: $(cat /sys/class/net/eth1/address) 
+UPTIME  : $(cat /proc/uptime)
+LOADAVG : $(cat /proc/loadavg)
+EOT
+        ;;        
 
     *) die "Usage: $0 stop|start|restart"
 esac   
