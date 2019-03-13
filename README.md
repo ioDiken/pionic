@@ -37,11 +37,6 @@ To install:
 
             Set user 'pi' password as desired
 
-        Boot Options
-
-            Desktop/CLI: Console text login 
-            Wait for Network at Boot: yes
-
         Interfacing Options:
 
             SSH: Yes
@@ -71,7 +66,7 @@ To install:
     Edit pionic/pionic.sh to set the factory server address and port, default is
     "10.2.3.4:80" which is almost certainly wrong.
 
-    Make sure ethernet dongle is attached to USB, then reboot. 
+    Make sure ethernet dongle is attached to USB, then reboot.
     
-    SSH to the device's IP address and run 'curl http://localhost/test' to
-    check that cgiserver is running (you will see the server's environment).
+    Note Pionic takes over the display, will show green status screen if started successfully, or red
+    screen if not. Subsequent login must occur via SSH or serial terminal.
