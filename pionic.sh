@@ -2,8 +2,12 @@
 # This runs at boot, start test station operation
 # It can also be run manually to restart all services
 
-# factory server address, change this if needed
+# Factory server address and https port, advertised in the beacon, change as
+# needed
 factory_server=10.2.3.4:8000
+
+# DUT default address, must be /24 network and not ending with .1
+dut=192.168.111.10
 
 set -ue; trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 
@@ -35,8 +39,8 @@ case "${1:-start}" in
         # DUT is attached to eth1 via usb ethernet dongle
         for t in {1..20}; do
             if ip l set eth1 up; then
-                # gets a static IP
-                ip a a dev eth1 172.31.255.1/24
+                # takes a static IP on the DUT's subnet
+                ip a a dev eth1 ${dut%.*}.1/24
                 sleep 1
 
                 # Start the beacon server on eth1, the payload contains the factory
@@ -61,7 +65,7 @@ case "${1:-start}" in
                 #sudo iptables -A FORWARD -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
                 # Forward port 2222 from the factory to DUT's ssh
-                iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 2222 -j DNAT --to 172.31.255.2:22
+                iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 2222 -j DNAT --to $dut:22
                 # iptables -A FORWARD -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
                 break
