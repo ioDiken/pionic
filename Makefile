@@ -2,31 +2,36 @@
 
 ifeq (${USER},root)
 default:; @echo Must not be root!; false
-
 else
-default: beacon runfor FM_Transmitter_RPi3 fbput
+
+# note must escape the colon
+repos=https\://github.com/glitchub/beacon
+repos+=https\://github.com/glitchub/runfor
+repos+=https\://github.com/glitchub/fbput
+repos+=https\://github.com/glitchub/FM_Transmitter_RPi3
+
+packages=sox graphicsmagick
+
+default: ${repos} ${packages} .gitignore
 	sudo sed -i "/pionic/d; /^exit/i /home/pi/pionic/pionic.sh start" /etc/rc.local
 
-beacon:
-	git clone https://github.com/glitchub/$@
-	make -C $@
+.PHONY: ${repos}
+${repos}:
+	[ -d "$(notdir $@)" ] || git clone $@
+	make -C $(notdir $@)
 
-runfor:
-	git clone https://github.com/glitchub/$@
-	make -C $@
+.PHONY: ${packages}
+${packages}:
+	sudo apt install $@
 
-fbput:
-	sudo apt install graphicsmagick
-	git clone https://github.com/glitchub/$@
-	make -C $@
-
-FM_Transmitter_RPi3:
-	sudo apt install sox
-	git clone https://github.com/glitchub/$@
-	make -C $@
-endif
+.PHONY: .gitignore
+.gitignore:
+	echo $@ > $@    
+	$(foreach r,$(notdir ${repos}),echo $r >> $@;)
 
 clean:
 	sudo ./pionic.sh stop
-	rm -rf beacon runfor FM_Transmitter_RPi3 fbput
 	sudo sed -i "/pionic/d" /etc/rc.local
+	rm -rf $(notdir ${repos})
+
+endif
