@@ -23,5 +23,4 @@ unset n o p
 die() { echo "$*" >&9; exit 1; }
 
 # output Content-type header if invoked via cgiserver
->>>>>>> Stashed changes
 [[ -v GATEWAY_INTERFACE ]] && printf "Content-type: text/plain\n\n"
