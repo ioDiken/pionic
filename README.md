@@ -27,9 +27,19 @@ Pionic provides:
     
 To install:
 
-    Boot from fresh Raspian SDcard image.
+    Download the SDcard image:
+    
+        http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2018-11-15/2018-11-13-raspbian-stretch-lite.zip,
 
-    Attach monitor and usb keyboard, log in as user 'pi', password 'raspberry'
+    Unzip and extract file 2018-11-13-raspbin-stretch-lite.img which is about
+    1.8GB. 
+
+    Install the .img file to an 8GB SDcard using dd on linux or Win32DiskImager
+    on Windows.
+
+    Insert the card into the Pi, attach monitor and usb keyboard. It should
+    boot to a text console (if it boots to X, you have the wrong image). Log in
+    as user 'pi', password 'raspberry'
 
     sudo raspi-config:
 
@@ -48,23 +58,13 @@ To install:
 
             Memory split: 0
 
-    Append to ~/.bashrc:
-        
-        alias resize='shopt -s checkwinsize; (IFS="[;"; printf "\e7\e[r\e[999;999H\e[6n\e8"; read -s -t1 -dR x r c && stty rows $r cols $c) <> /dev/tty'
-        resize
-    
-    (This tells bash to size of the terminal window, use 'resize' command as needed when it changes.)
-    
     Attach ethernet, wait for IP to come up.
     
-    sudo apt update
-    sudo apt upgrade
-    sudo apt install git
-    git clone https://github.com/glitchub/pionic
-    make -C pionic
-
-    Edit pionic/pionic.sh to set the factory server address and port, default is
-    "10.2.3.4:80" which is almost certainly wrong.
+        sudo apt update
+        sudo apt upgrade
+        sudo apt install git
+        git clone https://github.com/glitchub/pionic
+        make -C pionic
 
     Make sure ethernet dongle is attached to USB, then reboot.
     
