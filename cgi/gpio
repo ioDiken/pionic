@@ -1,5 +1,6 @@
-#!/bin/bash 
-source ${0%/*}/cgi.inc
+#!/bin/bash
+here=${0%/*}
+source $here/cgi.inc
 
 id -Gn | grep -qw 'root\|gpio' || die "Must be root!"
 
@@ -24,7 +25,7 @@ current state of all enabled gpios.
 shopt -s nullglob nocasematch
 
 sys=/sys/class/gpio
-[ -d $sys ] || die "User-mode GPIOs not supported"
+[ -d $sys ] || die "User-space GPIOs not supported"
 
 # return list of enabled gpios
 enabled()

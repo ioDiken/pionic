@@ -1,0 +1,123 @@
+CGIs in this directory are accessed via http on port 80 withn URL in the general form: 
+
+    http://ip.ad.re.ss/cginame[?options[&...options]]
+
+Where "cginame" is one of the executable files in this directory. The server
+returns HTTP error status if the CGI exits with non-zero status or writes to
+stderr.
+
+For bash CGI's, the file cgi.inc can be included in order to:
+        
+    Configure the shell to abort with error upon reference to uninitialized variables or if any script
+    pipeline has non-zero exit status
+
+    Redirect stderr to stdout, so incidentalm writes to stderr do not cause
+    failure (e.g. from dd). The original stderr is accessible via file handle 9.
+    
+    Instantiate a die() function which can be invoked to write to stderr and abort the program 
+
+    Parse QUERY_STRING into separate bash variables $1, $2, etc. and unescapes
+    all URL-encoded characters. 
+
+    Output the "Content-type: text/plain" header so that script output is
+    returned to the caller verbatim.  This can be avoided by unset-ting
+    GATEWAY_INTERFACE prior to including cgi.inc. 
+
+    Any script error will trigger a corresponding curl error if the -f flag is used. 
+
+    Note that CGIs can also be run from the bash command line, with options
+    provided as command line arguments.
+
+These CGIs are defined:
+
+test
+
+    Returns the current CGI environment. There are no options.
+
+    Example:
+
+    $ curl -qf http://192.168.137.224/test
+    BASH=/bin/bash
+    BASHOPTS=cmdhist:complete_fullquote:extquote:force_fignore:hostcomplete:interactive_comments:progcomp:promptvars:sourcepath
+    BASH_ALIASES=()
+    BASH_ARGC=([0]="1")
+    ...
+
+display
+
+    Writes to the test station display or HDMI. No text is returned. Options
+    are:
+        
+        command=string  - mandatory, specify command, one of:
+            clear       - clear the screen to the background color
+            image       - display specified image 
+            text        - clear display to bg color and write posted text with fg color (from stdin)
+        fg=color        - optional, define foreground color text, default white.
+        bg=color        - optional, define background color for clear or text, default black.
+        image=filename  - optional, specify image name, path relative to ${0%/*}, default is '../colorbars.png'
+        point=N         - optional, pointsize for text, default is 20
+        align=l|c|r     - optional, text alignment left, center, or right, default is left.
+        
+    Example:
+
+        $ cat file.txt | curl --data-binary @- -qf 'https://192.168.111.1/display?command=text&fg=green'
+
+            (note arbitrary text on stdin)
+
+        $ curl -qf 'https://192./168.111.1/display?command=image'
+
+            (display colorbars)
+
+factory
+    
+    Returns the factory server address and CGI port. This is the mechanism used
+    by DUT to determine that it is, in fact, in the factory environment.
+
+    Example:
+
+        $ curl -qf 'https://192./168.111.1/factory'
+        10.1.2.3:443
+
+gpio
+
+    Controls the GPIOs on the test controller.
+
+    Options are:
+
+        G=0       - enable gpio G and set it to output low
+        G=1       - enable gpio G and set to output high
+        G=in      - enable gpio G and set it as an input
+        G=reset   - disable gpio G (so no longer owned by sysfs)
+        reset     - disable all gpios
+    
+    Where G is the gpio number 4 to 27. After all options are processed (if
+    any), list the current state of all enabled gpios.
+
+    Example:
+
+        $ curl -qf 'http://192.168.137.224/gpio?6=1'
+        6: out 1
+        
+        $ curl -qf 'http://192.168.137.224/gpio?7=in'
+        6: out 1
+        7: in 1
+        
+        $ curl -qf 'http://192.168.137.224/gpio'
+        6: out 1
+        7: in 1
+
+mkfm
+    
+    Trigger FM signal generation on GPIO 4. Returns transmit status message.
+
+    Options are:
+
+        freq=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
+        tone=X     - modulation frequency in Hz, 10-8000, default is 1000
+        time=X     - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
+
+    Example:
+
+        $ curl -qf 'http://192.168.137.224/mkfm?freq=100&time=5'
+        Transmitting 1000 Hz on 100 MHz FM for 5 seconds
+

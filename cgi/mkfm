@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source ${0%/*}/cgi.inc
+here=${0%/*}
+source $here/cgi.inc
 
 ((!UID)) || die "Must be root!"
 
@@ -12,27 +13,27 @@ usage="Usage:
 
 Options are:
 
-    mhz=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
-    tone=X    - modulation frequency in Hz, 10-8000, default is 1000
-    time=X    - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
+    freq=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
+    tone=X     - modulation frequency in Hz, 10-8000, default is 1000
+    time=X     - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
 "
 
-runfor=${0%/*}/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
+runfor=$here/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
 sox=$(type -P sox) || die "Need executable sox"
-xmit=${0%/*}/../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
+xmit=$here/../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
 
 freq=99.9
 tone=1000
 time=30
 
 (($#)) && for a in "$@"; do case $a in
-    freq=*) freq=${a#*=}; echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 88.1 && $1 <= 107.9)}' || die "Invalid frequency '$freq'";;
+    freq=*) freq=${a#*=}; echo $freq | awk '{exit !(match($1,/^[0-9]+(.[0-9])?$/) && $1 >= 87.9 && $1 <= 107.9)}' || die "Invalid frequency '$freq'";;
     tone=*) tone=${a#*=}; echo $tone | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 10 && $1 <= 8000)}' || die "Invalid tone '$tone'";;
     time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$tone'";;
     *) exit 1 # die "$usage"
 esac; done    
 
-pkill -f $xmit || true
+pkill -f ${xmit##*/} || true
 if ((time)); then
     echo "Transmitting $tone Hz on $freq MHz FM for $time seconds"
     # close popen'd stdio or cgiserver will stall

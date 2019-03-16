@@ -3,7 +3,6 @@ here=${0%/*}
 source $here/cgi.inc
 
 fbput=$here/../fbput/fbput
-
 [ -x $fbput ] || die "Requires executable $fbput"
 gm=$(type -P gm) || die "Requires executable gm"
 
@@ -20,21 +19,20 @@ usage="Usage:
 
 Options are:
 
-    fg=color        - optional, define foreground color text, default black
-    bg=color        - optional, define background color for clear or text, default white
-    image=filename  - optional, specify image name, path relative to ${0%/*}, default is 'splash.png'
-    point=N         - optional, pointsize for text, default is 20
-    align=l|c|r     - optional, text alignment left, center, or right, default is left
     command=string  - mandatory, specify command, one of:
         clear       - clear the screen to the background color
         image       - display specified image 
         text        - clear display to bg color and write posted text with fg color (from stdin)
-        colorbars   - same as 'command=image image=colorbars.jpg'
+    fg=color        - optional, define foreground color text, default black
+    bg=color        - optional, define background color for clear or text, default white
+    image=filename  - optional, specify image name, path relative to ${0%/*}, default is '../colorbars.png'
+    point=N         - optional, pointsize for text, default is 20
+    align=l|c|r     - optional, text alignment left, center, or right, default is left
 "
 
 fg=white
 bg=black
-image=splash.png
+image=../colorbars.png
 command=
 point=20
 gravity=northwest
@@ -59,20 +57,19 @@ case $command in
     clear) 
         $gm convert -size $size "xc:$bg" -depth 8 RGB:- | $fbput - 
         ;;
-    colorbars)
-        $gm convert colorbars.jpg -resize $size! -depth 8 RGB:- | $fbput - 
-        ;;
+
     image) 
-        $gm convert $image -resize $size! -depth 8 RGB:- | $fbput - 
+        $gm convert $here/$image -resize $size! -depth 8 RGB:- | $fbput - 
         ;;
+
     text) 
-        tmp=/tmp/display.$$.$RANDOM
-        #trap "rm -f $tmp" EXIT
+        tmp=$(mktemp -t display.XXXXXX)
+        trap "rm -f $tmp" EXIT
         cat > $tmp
         $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text 10,$point '@$tmp'" -depth 8 RGB:- | $fbput - 
         ;;
-    "") 
-        die "No command specified"
+
+    "") die "No command specified"
         ;;
 
     *) die "Invalid command $command";;
