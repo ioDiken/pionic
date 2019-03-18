@@ -4,24 +4,6 @@ source $here/cgi.inc
 
 id -Gn | grep -qw 'root\|gpio' || die "Must be root!"
 
-usage="Usage:
-    
-    gpio [options]
-    -or-
-    curl -f http://172.31.255.1/gpio[?option[&option...]]
-
-Options are:
-    
-    G=0       - set gpio G to output low
-    G=1       - set gpio G to output high
-    G=in      - set gpio G to an input
-    G=reset   - disable gpio G (so no longer owned by sysfs)
-    reset     - disable all gpios
-
-Where G is the gpio number. After options are processed (if any), list the
-current state of all enabled gpios.  
-"
-
 shopt -s nullglob nocasematch
 
 sys=/sys/class/gpio
@@ -34,37 +16,37 @@ enabled()
 }
 
 # set gpio $1 direction to $2, or die
-direction() 
-{ 
+direction()
+{
     [ -d $sys/gpio$1 ] || { echo $1 > $sys/export; sleep .1; }
     grep -q $2 $sys/gpio$1/direction || echo $2 > $sys/gpio$1/direction
 }
 
 for opt in "$@"; do
     case "$opt" in
-        r*) 
+        r*)
             for g in $(enabled); do echo $g > $sys/unexport; done
             ;;
-        *) 
+        *)
             [[ $opt =~ ^([0-9]+)=(.+) ]] || die "Invalid option '$opt'"
             gpio=${BASH_REMATCH[1]}
             op=${BASH_REMATCH[2]}
             case "$op" in
-                0|1) 
+                0|1)
                     direction $gpio out; echo $op > $sys/gpio$gpio/value
                     ;;
-                in*) 
+                in*)
                     direction $gpio in
                     ;;
-                re*) 
+                re*)
                     [ -d $sys/gpio$gpio ] && echo $gpio > $sys/unexport
                     ;;
-                *) 
+                *)
                     die "Invalid option '$opt'"
                     ;;
             esac
             ;;
-    esac        
+    esac
 done
 
-for g in $(enabled); do echo $g: $(cat $sys/gpio$g/direction $sys/gpio$g/value); done    
+for g in $(enabled); do echo $g: $(cat $sys/gpio$g/direction $sys/gpio$g/value); done

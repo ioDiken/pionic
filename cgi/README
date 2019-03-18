@@ -1,4 +1,5 @@
-CGIs in this directory are accessed via http on port 80 withn URL in the general form: 
+CGIs in this directory are accessed via http on port 80 withn URL in the
+general form: 
 
     http://ip.ad.re.ss/cginame[?options[&...options]]
 
@@ -8,13 +9,15 @@ stderr.
 
 For bash CGI's, the file cgi.inc can be included in order to:
         
-    Configure the shell to abort with error upon reference to uninitialized variables or if any script
-    pipeline has non-zero exit status
+    Configure the shell to abort with error upon reference to uninitialized
+    variables or if any script pipeline has non-zero exit status
 
     Redirect stderr to stdout, so incidentalm writes to stderr do not cause
-    failure (e.g. from dd). The original stderr is accessible via file handle 9.
+    failure (e.g. from dd). The original stderr is accessible via file handle
+    9.
     
-    Instantiate a die() function which can be invoked to write to stderr and abort the program 
+    Instantiate a die() function which can be invoked to write to stderr and
+    abort the program 
 
     Parse QUERY_STRING into separate bash variables $1, $2, etc. and unescapes
     all URL-encoded characters. 
@@ -23,7 +26,8 @@ For bash CGI's, the file cgi.inc can be included in order to:
     returned to the caller verbatim.  This can be avoided by unset-ting
     GATEWAY_INTERFACE prior to including cgi.inc. 
 
-    Any script error will trigger a corresponding curl error if the -f flag is used. 
+    Any script error will trigger a corresponding curl error if the -f flag is
+    used. 
 
     Note that CGIs can also be run from the bash command line, with options
     provided as command line arguments.
@@ -45,28 +49,34 @@ test
 
 display
 
-    Writes to the test station display or HDMI. No text is returned. Options
-    are:
-        
-        command=string  - mandatory, specify command, one of:
-            clear       - clear the screen to the background color
-            image       - display specified image 
-            text        - clear display to bg color and write posted text with fg color (from stdin)
-        fg=color        - optional, define foreground color text, default white.
-        bg=color        - optional, define background color for clear or text, default black.
-        image=filename  - optional, specify image name, path relative to ${0%/*}, default is '../colorbars.png'
-        point=N         - optional, pointsize for text, default is 20
-        align=l|c|r     - optional, text alignment left, center, or right, default is left.
+    Write to the test station display or HDMI. No text is returned. The first option must be a command:
+
+        clear       - clear the screen to the background color specified with
+                      bg= or black
+        image       - display image specified with image=, or posted on stdin,
+                      or colorbars.jpg 
+        text        - clear display to bg color and write posted text with fg
+                      color (posted on stdin)
+    
+    Other options areL
+
+        fg=color    - define foreground color text, default white.
+        bg=color    - define background color for clear, image, or text,
+                      default black.
+        image=file  - specify image name, path relative to ${0%/*}
+        point=N     - pointsize for text, default is 20
+        align=l|c|r - text alignment left, center, or right, default is left.
         
     Example:
 
-        $ cat file.txt | curl --data-binary @- -qf 'https://192.168.111.1/display?command=text&fg=green'
+        # Show arbitrary text
+        $ cat file.txt | curl --data-binary @- -qf 'https://192.168.111.1/display?text&fg=green'
 
-            (note arbitrary text on stdin)
+        # Show a PNG image
+        $ curl --binary-data @image.png -qf 'https://192.168.111.1/display?image&bg=white'
 
-        $ curl -qf 'https://192./168.111.1/display?command=image'
-
-            (display colorbars)
+        # Show colorbars
+        $ curl -qf 'https://192./168.111.1/display?image'
 
 factory
     
@@ -84,11 +94,11 @@ gpio
 
     Options are:
 
-        G=0       - enable gpio G and set it to output low
-        G=1       - enable gpio G and set to output high
-        G=in      - enable gpio G and set it as an input
-        G=reset   - disable gpio G (so no longer owned by sysfs)
-        reset     - disable all gpios
+        G=0         - enable gpio G and set it to output low
+        G=1         - enable gpio G and set to output high
+        G=in        - enable gpio G and set it as an input
+        G=reset     - disable gpio G (so no longer owned by sysfs)
+        reset       - disable all gpios
     
     Where G is the gpio number 4 to 27. After all options are processed (if
     any), list the current state of all enabled gpios.
@@ -112,9 +122,10 @@ mkfm
 
     Options are:
 
-        freq=XXX.X - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
-        tone=X     - modulation frequency in Hz, 10-8000, default is 1000
-        time=X     - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
+        freq=XXX.X  - transmit frequency in MHz, 88.1 to 107.9, default is 99.9
+        tone=X      - modulation frequency in Hz, 10-8000, default is 1000
+        time=X      - transmit time in seconds, 0-120, default is 30. 0 just
+                      kills the current transmission. 
 
     Example:
 

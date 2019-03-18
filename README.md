@@ -31,8 +31,7 @@ To install:
     
         http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2018-11-15/2018-11-13-raspbian-stretch-lite.zip,
 
-    Unzip and extract file 2018-11-13-raspbin-stretch-lite.img which is about
-    1.8GB. 
+    Unzip and extract file 2018-11-13-raspbin-stretch-lite.img (about 1.8GB). 
 
     Install the .img file to an 8GB SDcard using dd on linux or Win32DiskImager
     on Windows.
@@ -41,7 +40,7 @@ To install:
     boot to a text console (if it boots to X, you have the wrong image). Log in
     as user 'pi', password 'raspberry'
 
-    sudo raspi-config:
+    Run 'sudo raspi-config':
 
         Change User Password:
 
@@ -58,7 +57,7 @@ To install:
 
             Memory split: 0
 
-    Attach ethernet, wait for IP to come up.
+    Attach ethernet, wait for IP to come up, then run:
     
         sudo apt update
         sudo apt upgrade
@@ -66,7 +65,8 @@ To install:
         git clone https://github.com/glitchub/pionic
         make -C pionic
 
-    Make sure ethernet dongle is attached to USB, then reboot.
+    Make sure ethernet dongle is attached to USB and reboot.
     
-    Note Pionic takes over the display, will show green status screen if started successfully, or red
-    screen if not. Subsequent login must occur via SSH or serial terminal.
+    Note Pionic takes over the display, will show green status screen if
+    started successfully, or red screen if not. Subsequent login must occur via
+    SSH or serial terminal.

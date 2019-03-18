@@ -11,66 +11,57 @@ size=$($fbput -q) || die "Can't get framebuffer size"
 font=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf
 [ -f $font ] || die "Requires $font"
 
-usage="Usage:
-
-    display [options]
-    -or-
-    curl -qf http://172.31.255.1/display[?option[&option...]]
-
-Options are:
-
-    command=string  - mandatory, specify command, one of:
-        clear       - clear the screen to the background color
-        image       - display specified image 
-        text        - clear display to bg color and write posted text with fg color (from stdin)
-    fg=color        - optional, define foreground color text, default black
-    bg=color        - optional, define background color for clear or text, default white
-    image=filename  - optional, specify image name, path relative to ${0%/*}, default is '../colorbars.png'
-    point=N         - optional, pointsize for text, default is 20
-    align=l|c|r     - optional, text alignment left, center, or right, default is left
-"
-
 fg=white
 bg=black
-image=../colorbars.jpg
-command=
 point=20
 gravity=northwest
+format=
+image=
+command=clear
 
-for o in "$@"; do 
-    arg=${o#*=}
-    [[ $arg ]] || die "Invalid option $o"
-    case $o in
-        fg=?*) fg=$arg;;
-        bg=?*) bg=$arg;;
-        point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid point $point";;
-        align=l*) gravity=northwest;;
-        align=c*) gravity=north;;
-        align=r*) gravity=northeast;;
-        image=?*) image=$here/$arg; [[ -f $image ]] || die "Invalid image $image";;
-        command=?*) command=$arg;;
-        *) die "Invalid option $o";;
-    esac
-done
+if (($#)); then
+    command=$1
+    shift
+
+    for o in "$@"; do
+        arg=${o#*=}
+        [[ $arg ]] || die "Invalid option $o"
+        case $o in
+            fg=?*) fg=$arg;;
+            bg=?*) bg=$arg;;
+            point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid point $point";;
+            align=l*) gravity=northwest;;
+            align=c*) gravity=north;;
+            align=r*) gravity=northeast;;
+            image=?*) image=$here/$arg; [[ -f $image ]] || die "Invalid image $image";;
+            *) die "Invalid option $o";;
+        esac
+    done
+fi
 
 case $command in
-    clear) 
-        $gm convert -size $size "xc:$bg" -depth 8 RGB:- | $fbput - 
+    clear)
+        $gm convert -size $size "xc:$bg" -depth 8 RGB:- | $fbput -
         ;;
 
-    image) 
-        $gm convert $here/$image -resize $size! -depth 8 RGB:- | $fbput - 
+    image)
+        if [[ $image ]]; then
+            image=$here/$image
+        elif ((CONTENT_LENGTH)); then
+            # image is on stdin
+            image=-
+        else
+            image=$here/../colorbars.jpg
+        fi
+        $gm convert $image -background $bg -flatten -resize $size! -depth 8 RGB:- | $fbput -
         ;;
 
-    text) 
+    text)
         tmp=$(mktemp -t display.XXXXXX)
         trap "rm -f $tmp" EXIT
         cat > $tmp
-        $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text 10,$point '@$tmp'" -depth 8 RGB:- | $fbput - 
-        ;;
-
-    "") die "No command specified"
+        $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text 10,$point '@$tmp'" -depth 8 RGB:- | $fbput -
         ;;
 
     *) die "Invalid command $command";;
-esac    
+esac
