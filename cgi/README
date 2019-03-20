@@ -54,7 +54,7 @@ display
         clear       - clear the screen to the background color specified with
                       bg= or black
         image       - display image posted on stdin, or named with image=
-                      (default is ../colorbars.jpg)
+                      (default is media/colorbars.jpg)
         text        - clear display to bg color and write posted text with fg
                       color (posted on stdin)
     
@@ -132,3 +132,19 @@ mkfm
         $ curl -qf 'http://192.168.137.224/mkfm?freq=100&time=5'
         Transmitting 1000 Hz on 100 MHz FM for 5 seconds
 
+play
+    
+    Start video playback on HDMI, returns playback status message.
+
+    Options are:
+
+        video=file  - play file in the cgi/media directory, default is
+                      'colorbars.mp4'.
+        time=X      - play time in seconds, 0-120, default is 30. 0 just kills
+                      the current playback.
+        lcd         - if provided, playback is via LCD instead of HDMI
+
+    Example:        
+        
+        $ curl -qf 'http://192.168.137.224/play&time=10'
+        Playing /home/pi/pionic/cgi/media/colorbars.mp4 on hdmi for 10 seconds

@@ -8,7 +8,7 @@ gm=$(type -P gm) || die "Requires executable gm"
 
 size=$($fbput -q) || die "Can't get framebuffer size"
 
-font=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf
+font=${here}/media/WenQuanYiMicroHeiMono.ttf
 [ -f $font ] || die "Requires $font"
 
 fg=white
@@ -31,9 +31,10 @@ if (($#)); then
             bg=?*) bg=$arg;;
             point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid point $point";;
             align=l*) gravity=northwest;;
-            align=c*) gravity=north;;
+            align=c*) gravity=center;;
             align=r*) gravity=northeast;;
-            image=?*) image=$here/$arg; [[ -f $image ]] || die "Invalid image $image";;
+            image=?*) image=$here/media/$arg; [[ -f $image ]] || die "Invalid image $image";;
+            font=?*) font=$here/media/$arg; [[ -f $font ]] || die "Invalid font $font";;
             *) die "Invalid option $o";;
         esac
     done
@@ -51,7 +52,7 @@ case $command in
             # image is on stdin
             image=-
         else
-            image=$here/../colorbars.jpg
+            image=$here/media/colorbars.jpg
         fi
         $gm convert $image -background $bg -flatten -resize $size! -depth 8 RGB:- | $fbput -
         ;;
@@ -60,7 +61,8 @@ case $command in
         tmp=$(mktemp -t display.XXXXXX)
         trap "rm -f $tmp" EXIT
         cat > $tmp
-        $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text 10,$point '@$tmp'" -depth 8 RGB:- | $fbput -
+        offset=10,$point; [[ $gravity==center ]] && offset=0,$((point/2))
+        $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text $offset '@$tmp'" -depth 8 RGB:- | $fbput -
         ;;
 
     *) die "Invalid command $command";;

@@ -13,29 +13,30 @@ usage="Usage:
 
 Options are:
 
-    video=file  - file to play, default
-    time=X      - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission.
-    lcd         - if given, output to lcd instead of hdmi
+    video=file  - file to play, default is coloarbars.mp4
+    time=X      - play time in seconds, 0-120, default is 30. 0 just kills the current play.
+    lcd         - if specified, output on lcd instead of hdmi
 "
 
 runfor=$here/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
+omxplayer=$(type -P omxplayer) || die "Need executable omxplayer"
 
+video=$here/media/colorbars.mp4
 time=30
-video=${here}/../colorbars.mp4
-display=5
+output="--display 5 -o hdmi"
+display=hdmi
 
 (($#)) && for a in "$@"; do case $a in
-    video=*) video=${here}/${a#*=}; [ -f $video ] || die "No such file '$video'";; 
-    time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$tone'";;
-    lcd) display=4;;   
+    video=*) video=$here/media/${a#*=}; [ -f $video ] || die "No such file '$video'";;
+    time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$time'";;
+    lcd) output="--display 4 -o local"; display=lcd;;
     *) exit 1 # die "$usage"
-esac; done    
+esac; done
 
-pkill -f omxplayer || true
+pkill -f ${omxplayer##*/} || true
 if ((time)); then
-    echo "Playing $video on display $display for $time seconds"
+    echo "Playing $video on $display for $time seconds"
     # close popen'd stdio or cgiserver will stall
-    [ -t 1 ] || exec 0<&- 1>&- 2>&- 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
-    # Note must kill fm_transmitter with SIGINT aka signal 2
-    ( set +E; $runfor $time omxplayer --display $display --no-keys --no-osd --loop $video & )
-fi  
+    exec 0<&- 1>&- 2>&- 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+    ( set +E; $runfor $time $omxplayer $output --blank --no-keys --no-osd --loop $video & )
+fi
