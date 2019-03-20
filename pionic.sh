@@ -122,7 +122,7 @@ case "${1:-start}" in
             ! [[ $eth1_stat2 ]] || echo "        $eth1_stat2"
             ((cup)) && echo CGISRV: OK || echo CGISRV: NOT RUNNING
             ((use_beacon)) && { ((bup)) && echo BEACON: OK || echo BEACON: NOT RUNNING; }
-        } | ~pi/pionic/cgi/display command=text fg=white point=50 $( ((ok)) && echo bg=green || echo bg=red)
+        } | ~pi/pionic/cgi/display text fg=white point=40 $( ((ok)) && echo bg=green || echo bg=red)
         ;;
 
     *) die "Usage: $0 stop|start|restart"
