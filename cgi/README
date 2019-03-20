@@ -49,12 +49,12 @@ test
 
 display
 
-    Write to the test station display or HDMI. No text is returned. The first option must be a command:
+    Write to the test station display. No text is returned. The first option must be a command:
 
         clear       - clear the screen to the background color specified with
                       bg= or black
-        image       - display image specified with image=, or posted on stdin,
-                      or colorbars.jpg 
+        image       - display image posted on stdin, or named with image=
+                      (default is ../colorbars.jpg)
         text        - clear display to bg color and write posted text with fg
                       color (posted on stdin)
     

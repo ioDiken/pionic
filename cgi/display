@@ -47,7 +47,7 @@ case $command in
     image)
         if [[ $image ]]; then
             image=$here/$image
-        elif ((CONTENT_LENGTH)); then
+        elif ((${CONTENT_LENGTH:-0})); then
             # image is on stdin
             image=-
         else

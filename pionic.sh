@@ -37,6 +37,9 @@ case "${1:-start}" in
             val=$(lookup $key) || die "Must define '$key' in pionic.cfg"
             declare $key=$val
         done    
+        
+        sysctl net.ipv6.conf.all.disable_ipv6=1
+        sysctl sys.net.ipv4.ip_forward=1
 
         # eth1 attaches to dut via usb ethernet dongle
         # bring it up and assign static IP
@@ -70,7 +73,6 @@ case "${1:-start}" in
         while true; do
             if [[ $(ipaddr eth0) ]]; then
                 # NAT the DUT to the factory
-                echo 1 > /proc/sys/net/ipv4/ip_forward
                 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 
                 # Forward port 2222 from the factory to DUT's ssh
@@ -90,7 +92,6 @@ case "${1:-start}" in
         pkill -f cgiserver || true
         ip a flush eth1 || true
         ip l set eth1 down || true
-        echo 0 > /proc/sys/net/ipv4/ip_forward
         iptables -F; iptables -X; iptables -t nat -F
         cat /dev/zero > /dev/fb0 2>/dev/null || true
         ;;
