@@ -8,15 +8,16 @@ gm=$(type -P gm) || die "Requires executable gm"
 
 size=$($fbput -q) || die "Can't get framebuffer size"
 
-font=${here}/media/WenQuanYiMicroHeiMono.ttf
-[ -f $font ] || die "Requires $font"
+mono=${here}/media/WenQuanYiMicroHeiMono.ttf
+[[ -f $mono ]] || die "Requires $mono"
+prop=${here}/media/WenQuanYiMicroHei.ttf
+[[ -f $prop ]] || die "Requires $prop"
 
 fg=white
 bg=black
 point=20
 align=nw
-format=
-image=
+font=$mono
 command=clear
 
 if (($#)); then
@@ -29,13 +30,11 @@ if (($#)); then
         case $o in
             fg=?*) fg=$arg;;
             bg=?*) bg=$arg;;
-            size=?*|point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid size $point";;
+            size=?*|point=?*) point=$arg;;
 	    align=?*) align=$arg;;
-            left) align=nw;;
-            center) align=c;;
-            right) align=ne;;
-            image=?*) image=$here/media/$arg; [[ -f $image ]] || die "Invalid image $image";;
-            font=?*) font=$here/media/$arg; [[ -f $font ]] || die "Invalid font $font";;
+	    mono*) font=$mono;;
+	    prop*) font=$prop;;
+            badge) point=80; align=c; font=$prop;;
             *) die "Invalid option $o";;
         esac
     done
@@ -43,18 +42,12 @@ fi
 
 case $command in
     clear)
-        $gm convert -size $size "xc:$bg" -depth 8 RGB:- | $fbput -
+        $gm convert -size $size xc:$bg -depth 8 RGB:- | $fbput -
         ;;
 
     image)
-        if [[ $image ]]; then
-            image=$here/$image
-        elif ((${CONTENT_LENGTH:-0})); then
-            # image is on stdin
-            image=-
-        else
-            image=$here/media/colorbars.jpg
-        fi
+        image=-
+        ((${CONTENT_LENGTH:-0})) || image=$here/media/colorbars.jpg
         $gm convert $image -background $bg -flatten -resize $size! -depth 8 RGB:- | $fbput -
         ;;
 

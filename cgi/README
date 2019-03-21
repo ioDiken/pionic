@@ -51,22 +51,22 @@ display
 
     Write to the test station display. No text is returned. The first option must be a command:
 
-        clear       - clear the screen to the background color specified with
-                      bg= or black
-        image       - display image posted on stdin or named with file=
+        clear       - clear the screen to specified background color
+        image       - display image posted on stdin, or colorbars if none
         text        - clear display to bg color and write posted text with fg
                       color (posted on stdin)
     
-    Other options areL
+    Other options are:
 
         fg=color    - define foreground color text, default white.
         bg=color    - define background color for clear, image, or text,
                       default black.
-        image=file  - specify name of image is cgi/media directory, default "colorbars.jpg".
-        size=N      - pointsize for text, default is 20
-        align=dir   - screen text alignment, one of: nw, n, ne, w, c, e, sw, s, or se. Default "nw". 
-        right       - short for align=ne
-        center      - short for align=c
+        size=N      - pointsize for text, default 20
+        align=dir   - screen text alignment, one of: nw, n, ne, w, c, e, sw, s,
+                      or se. Default "nw".
+        mono        - use monospaced font (the default)
+        prop        - use proportional font
+        badge       - short for "size=80 align=c prop"
         
     Example:
 
