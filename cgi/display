@@ -14,7 +14,7 @@ font=${here}/media/WenQuanYiMicroHeiMono.ttf
 fg=white
 bg=black
 point=20
-gravity=northwest
+align=nw
 format=
 image=
 command=clear
@@ -29,10 +29,11 @@ if (($#)); then
         case $o in
             fg=?*) fg=$arg;;
             bg=?*) bg=$arg;;
-            point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid point $point";;
-            align=l*) gravity=northwest;;
-            align=c*) gravity=center;;
-            align=r*) gravity=northeast;;
+            size=?*|point=?*) point=$arg; [[ $point =~ ^[0-9]+$ ]] || die "Invalid size $point";;
+	    align=?*) align=$arg;;
+            left) align=nw;;
+            center) align=c;;
+            right) align=ne;;
             image=?*) image=$here/media/$arg; [[ -f $image ]] || die "Invalid image $image";;
             font=?*) font=$here/media/$arg; [[ -f $font ]] || die "Invalid font $font";;
             *) die "Invalid option $o";;
@@ -58,10 +59,21 @@ case $command in
         ;;
 
     text)
+	case $align in
+	    nw) gravity=northwest; offset="10, $point" ;;
+	    ne) gravity=northeast; offset="10, $point" ;;
+            n*) gravity=north;     offset="0,  $point" ;;			
+	    w*) gravity=west;      offset="10, $((point/2))" ;;
+	    c*) gravity=center;    offset="0,  $((point/2))" ;;
+	    e*) gravity=east;      offset="10, $((point/2))" ;;
+	    sw) gravity=southwest; offset="10, $((-point))" ;;
+	    se) gravity=southeast; offset="10, $((-point))" ;;
+	    s*)	gravity=south;     offset="0,  $((-point))" ;;
+	    *) Invalid alignment $align;;
+  	esac
         tmp=$(mktemp -t display.XXXXXX)
         trap "rm -f $tmp" EXIT
         cat > $tmp
-        offset=10,$point; [[ $gravity==center ]] && offset=0,$((point/2))
         $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text $offset '@$tmp'" -depth 8 RGB:- | $fbput -
         ;;
 

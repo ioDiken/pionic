@@ -7,7 +7,7 @@ repos+=https\://github.com/glitchub/fbput
 repos+=https\://github.com/glitchub/FM_Transmitter_RPi3
 
 # apt packages to install
-packages=sox graphicsmagick fonts-freefont-ttf omxplayer 
+packages=sox graphicsmagick omxplayer 
 
 # system service to disable
 disable=avahi-daemon

@@ -39,7 +39,7 @@ case "${1:-start}" in
         done    
         
         sysctl net.ipv6.conf.all.disable_ipv6=1
-        sysctl sys.net.ipv4.ip_forward=1
+        sysctl net.ipv4.ip_forward=1
 
         # eth1 attaches to dut via usb ethernet dongle
         # bring it up and assign static IP
