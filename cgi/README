@@ -17,7 +17,7 @@ For bash CGI's, the file cgi.inc can be included in order to:
     9.
     
     Instantiate a die() function which can be invoked to write to stderr and
-    abort the program 
+    abort the program. 
 
     Parse QUERY_STRING into separate bash variables $1, $2, etc. and unescapes
     all URL-encoded characters. 
@@ -26,21 +26,20 @@ For bash CGI's, the file cgi.inc can be included in order to:
     returned to the caller verbatim.  This can be avoided by unset-ting
     GATEWAY_INTERFACE prior to including cgi.inc. 
 
-    Any script error will trigger a corresponding curl error if the -f flag is
-    used. 
+A script error will trigger a corresponding curl error if the -f flag is used. 
 
-    Note that CGIs can also be run from the bash command line, with options
-    provided as command line arguments.
+Note that CGIs can also be run from the bash command line, with options
+provided as command line arguments.
 
 These CGIs are defined:
 
 test
 
-    Returns the current CGI environment. There are no options.
+    Just returns the current CGI environment. There are no options.
 
     Example:
 
-    $ curl -qf http://192.168.137.224/test
+    $ curl -qf http://192.168.111.1/test
     BASH=/bin/bash
     BASHOPTS=cmdhist:complete_fullquote:extquote:force_fignore:hostcomplete:interactive_comments:progcomp:promptvars:sourcepath
     BASH_ALIASES=()
@@ -61,7 +60,7 @@ display
         fg=color    - define foreground color text, default white.
         bg=color    - define background color for clear, image, or text,
                       default black.
-        size=N      - pointsize for text, default 20
+        size=N      - pointsize for text, default 20 (note one point per pixel)
         align=dir   - screen text alignment, one of: nw, n, ne, w, c, e, sw, s,
                       or se. Default "nw".
         mono        - use monospaced font (the default)
@@ -84,7 +83,7 @@ display
 
 factory
     
-    Returns the factory server address and CGI port. This is the mechanism used
+    Return the factory server address and CGI port. This is the mechanism used
     by DUT to determine that it is, in fact, in the factory environment.
 
     Example:
@@ -94,7 +93,7 @@ factory
 
 gpio
 
-    Controls the GPIOs on the test controller.
+    Control GPIOs on the test controller.
 
     Options are:
 
@@ -109,14 +108,14 @@ gpio
 
     Example:
 
-        $ curl -qf 'http://192.168.137.224/gpio?6=1'
+        $ curl -qf 'http://192.168.111.1/gpio?6=1'
         6: out 1
         
-        $ curl -qf 'http://192.168.137.224/gpio?7=in'
+        $ curl -qf 'http://192.168.111.1/gpio?7=in'
         6: out 1
         7: in 1
         
-        $ curl -qf 'http://192.168.137.224/gpio'
+        $ curl -qf 'http://192.168.111.1/gpio'
         6: out 1
         7: in 1
 
@@ -133,7 +132,7 @@ mkfm
 
     Example:
 
-        $ curl -qf 'http://192.168.137.224/mkfm?freq=100&time=5'
+        $ curl -qf 'http://192.168.111.1/mkfm?freq=100&time=5'
         Transmitting 1000 Hz on 100 MHz FM for 5 seconds
 
 play
@@ -150,5 +149,15 @@ play
 
     Example:        
         
-        $ curl -qf 'http://192.168.137.224/play&time=10'
+        $ curl -qf 'http://192.168.111.1/play&time=10'
         Playing /home/pi/pionic/cgi/media/colorbars.mp4 on hdmi for 10 seconds
+
+time
+    
+    Return the controller's current time in epoch seconds and format MMDDhhmmYYYY.SS (in UCT).
+
+    Example:
+        
+         $ curl -qf http://192.168.111.1/time
+         1554235513 200504022019.13
+

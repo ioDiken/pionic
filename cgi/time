@@ -1,0 +1,6 @@
+#!/bin/bash
+# Return current UTC
+here=${0%/*}
+source $here/cgi.inc
+# return current time in epoch seconds and HHMMmmddYYYY.SS (UCT)
+date -u +"%s %H%M%m%d%Y.%S"
