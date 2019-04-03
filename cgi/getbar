@@ -1,0 +1,21 @@
+#!/bin/bash
+# Read a barcode from /dev/ttyACM0
+here=${0%/*}
+source $here/cgi.inc
+
+[ -c /dev/ttyACM0 ] || die "No /dev/ttyAMC0, scanner not attached?"
+
+timeout=60
+
+if (($#)); then
+    for o in "$@"; do
+        arg=${o#*=}
+        case $o in
+            timeout=?*) timeout=$arg;;
+            *) die "Invalid option $o";;
+        esac
+    done
+fi
+
+read -t $timeout bar < /dev/ttyACM0 || die "Timeout"
+echo $bar | tr -d $'\x0d'
