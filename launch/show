@@ -1,0 +1,58 @@
+#!/bin/bash
+# This is the default launch app, if launch= not defined in pionic.cfg
+# It's also invoked in case of startup error 
+# Show status and exit
+
+set -ue; trap 'echo $0: line $LINENO: exit status $? >&2' ERR
+
+die() { echo "$*" >&2; exit 1; }
+
+grep -q Raspberry /etc/rpi-issue &>/dev/null || die "Can only be run on Raspberry PI"
+((UID==0)) || die "Must be run as root"
+
+here=${0%/*}
+
+lookup() { awk 'BEGIN{X=1} {gsub(/[ \t]+/,"");if($1=="'$1'"){print $2; X=0; exit}} END{exit X}' FS== $here/../pionic.cfg; }
+
+# return ip address for interface $1 or "" 
+ipaddr() { ip -4 -o a show dev $1 2>/dev/null | awk '{print $4}'; }
+
+# return true if interface $1 is up and has ip address, false if not, sets $stat1 and $stat2
+isup()
+{
+    if stat1=$(cat /sys/class/net/$1/address 2>/dev/null); then
+        stat2=$(ipaddr $1)
+        ! [[ $stat2 ]] || return 0
+        (($(cat /sys/class/net/$1/carrier))) && stat2="NO IP" || stat2="UNPLUGGED"
+        return 1
+    fi
+    stat1="NO DEVICE"
+    stat2=""
+    return 0
+}
+
+# disable console output
+setterm --cursor off > /dev/tty1
+echo 0 > /sys/class/vtconsole/vtcon1/bind
+dmesg -n 1
+
+(($#)) && ok=0 || ok=1
+isup eth0 || ok=0; eth0_stat1=$stat1; eth0_stat2=$stat2
+isup eth1 || ok=0; eth1_stat1=$stat1; eth1_stat2=$stat2
+pgrep -f cgiserver &>/dev/null && cup=1 || { cup=0; ok=0; }
+bup=; beacon=$(lookup use_beacon) && ((beacon)) && { pgrep -f beacon &>/dev/null && bup=1 || { bup=0; ok=0; }; }
+lup=; launch=$(lookup launch) && [[ $launch ]] && { pgrep $here/launch/${launch%% } && lup=1 || { lup=0; ok=0; }; }
+
+{
+    ((ok)) && echo Test station ready || echo TEST STATION NOT READY
+    (($#)) && echo $*
+    echo
+    echo "ETH0  : $eth0_stat1"
+    ! [[ $eth0_stat2 ]] || echo "        $eth0_stat2"
+    echo "ETH1  : $eth1_stat1"
+    ! [[ $eth1_stat2 ]] || echo "        $eth1_stat2"
+    ((cup)) && echo CGISRV: OK || echo CGISRV: NOT RUNNING
+    [[ $bup ]] && { ((bup)) && echo BEACON: OK || echo BEACON: NOT RUNNING; }
+    [[ $lup ]] && { ((lup)) && echo LAUNCH: OK || echo LAUNCH: NOT RUNNING; }
+} | ~pi/pionic/cgi/display text fg=white point=40 $( ((ok)) && echo bg=blue || echo bg=red)
+

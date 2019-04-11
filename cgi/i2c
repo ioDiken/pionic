@@ -1,0 +1,7 @@
+#!/bin/bash
+source ${0%/*}/cgi.inc
+
+id -Gn | grep -qw 'root\|i2c' || die "Must be root!"
+
+# Just invoke the i2cio command to filter stdin to stdout, but timeout if it hangs 
+$runfor 10 $i2cio

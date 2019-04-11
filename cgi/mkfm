@@ -1,7 +1,5 @@
 #!/bin/bash
-
-here=${0%/*}
-source $here/cgi.inc
+source ${0%/*}/cgi.inc
 
 ((!UID)) || die "Must be root!"
 
@@ -18,9 +16,7 @@ Options are:
     time=X     - transmit time in seconds, 0-120, default is 30. 0 just kills the current transmission. 
 "
 
-runfor=$here/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
 sox=$(type -P sox) || die "Need executable sox"
-xmit=$here/../FM_Transmitter_RPi3/fm_transmitter; [ -x $xmit ] || die "Need executable $xmit"
 
 freq=99.9
 tone=1000
@@ -39,5 +35,5 @@ if ((time)); then
     # close popen'd stdio or cgiserver will stall
     [ -t 1 ] || exec 0<&- 1>&- 2>&- 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
     # Note must kill fm_transmitter with SIGINT aka signal 2
-    ( set +E; $runfor -s2 $time $xmit -f $freq - < <($sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone) & )
+    ( set +E; $runfor -s2 $time $fm_transmitter -f $freq - < <($sox -n -r22050 -c1 -b16 -t wav - synth 0 sine $tone) & )
 fi  

@@ -1,7 +1,6 @@
 #!/bin/bash
 # Dump the CGI environment
-here=${0%/*}
-source $here/cgi.inc
+source ${0%/*}/cgi.inc
 
 set
 

@@ -161,3 +161,15 @@ time
          $ curl -qf http://192.168.111.1/time
          1554235513 200504022019.13
 
+i2c 
+	
+    A simple wrapper for i2cio, passes the posted command tesxt to i2cio stdin and returns hex data output, if any.
+
+    Example:
+
+	$ curl --data-binary @- http://192.168.111.1/i2c <<< 'd 0x21 1 w 0x44 r 2'
+        0x01 0x34
+
+    (in this case, read two bytes from hypothetical register 0x44 of hypothetical device 0x21 on bus 1)		
+
+    See http://github.com/glitchub/i2cio for details.

@@ -1,7 +1,5 @@
 #!/bin/bash
-
-here=${0%/*}
-source $here/cgi.inc
+source ${0%/*}/cgi.inc
 
 ((!UID)) || die "Must be root!"
 
@@ -18,16 +16,15 @@ Options are:
     lcd         - if specified, output on lcd instead of hdmi
 "
 
-runfor=$here/../runfor/runfor; [ -x $runfor ] || die "Need executable $runfor"
 omxplayer=$(type -P omxplayer) || die "Need executable omxplayer"
 
-video=$here/media/colorbars.mp4
+video=$media/colorbars.mp4
 time=30
 output="--display 5 -o hdmi"
 display=hdmi
 
 (($#)) && for a in "$@"; do case $a in
-    video=*) video=$here/media/${a#*=}; [ -f $video ] || die "No such file '$video'";;
+    video=*) video=$media/${a#*=}; [ -f $video ] || die "No such file '$video'";;
     time=*) time=${a#*=}; echo $time | awk '{exit !(match($1,/^[0-9]+$/) && $1 >= 0 && $1 <= 120)}' || die "Invalid time '$time'";;
     lcd) output="--display 4 -o local"; display=lcd;;
     *) exit 1 # die "$usage"

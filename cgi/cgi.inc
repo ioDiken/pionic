@@ -1,7 +1,6 @@
 # source this file at top of a cgi
 
-# point filehandle 9 at stderr, then stderr at stdin
-exec 9>&2 2>&1
+die() { echo "$*" >&2; exit 1; }
 
 # abort on command error or undefined variable
 set -o pipefail -E -u
@@ -19,8 +18,25 @@ done
 set -- "${o[@]}"
 unset n o p
 
-# crreate die function that uses fh9
-die() { echo "$*" >&9; exit 1; }
+# pionic base directory
+base=$(realpath ${0%/*}/..)
+
+# pionic programs, not in path
+fbput=$base/fbput/fbput
+[ -x $fbput ] || die "Require executable $fbput"
+
+runfor=$base/runfor/runfor
+[ -x $runfor ] || die "require executable $runfor"
+
+i2cio=$base/i2cio/i2cio
+[ -x $i2cio ] || die "Require executable $i2cio"
+
+fm_transmitter=$base/FM_Transmitter_RPi3/fm_transmitter
+[ -x $fm_transmitter ] || die "Require executable $fm_transmitter"
+
+# path to media
+media=$base/cgi/media
 
 # output Content-type header if invoked via cgiserver
 [[ -v GATEWAY_INTERFACE ]] && printf "Content-type: text/plain\n\n"
+

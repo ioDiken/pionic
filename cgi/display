@@ -1,16 +1,13 @@
 #!/bin/bash
-here=${0%/*}
-source $here/cgi.inc
+source ${0%/*}/cgi.inc
 
-fbput=$here/../fbput/fbput
-[ -x $fbput ] || die "Requires executable $fbput"
 gm=$(type -P gm) || die "Requires executable gm"
 
 size=$($fbput -q) || die "Can't get framebuffer size"
 
-mono=${here}/media/WenQuanYiMicroHeiMono.ttf
+mono=$media/WenQuanYiMicroHeiMono.ttf
 [[ -f $mono ]] || die "Requires $mono"
-prop=${here}/media/WenQuanYiMicroHei.ttf
+prop=$media/WenQuanYiMicroHei.ttf
 [[ -f $prop ]] || die "Requires $prop"
 
 fg=white
@@ -47,7 +44,7 @@ case $command in
 
     image)
         image=-
-        ((${CONTENT_LENGTH:-0})) || image=$here/media/colorbars.jpg
+        ((${CONTENT_LENGTH:-0})) || image=$media/colorbars.jpg
         $gm convert $image -background $bg -flatten -resize $size! -depth 8 RGB:- | $fbput -
         ;;
 

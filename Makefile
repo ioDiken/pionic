@@ -5,6 +5,7 @@ repos=https\://github.com/glitchub/beacon
 repos+=https\://github.com/glitchub/runfor
 repos+=https\://github.com/glitchub/fbput
 repos+=https\://github.com/glitchub/FM_Transmitter_RPi3
+repos+=https\://github.com/glitchub/i2cio
 
 # apt packages to install
 apt=sox graphicsmagick omxplayer dnsmasq

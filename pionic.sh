@@ -6,10 +6,10 @@ set -ue; trap 'echo $0: line $LINENO: exit status $? >&2' ERR
 
 die() { echo "$*" >&2; exit 1; }
 
-grep -q Raspberry /etc/rpi-issue || die "Can only be run on Raspberry PI"
+grep -q Raspberry /etc/rpi-issue &>/dev/null || die "Can only be run on Raspberry PI"
 ((UID==0)) || die "Must be run as root"
 
-here=${0%/*}
+here=$(realpath ${0%/*})
 
 lookup() { awk 'BEGIN{X=1} {gsub(/[ \t]+/,"");if($1=="'$1'"){print $2; X=0; exit}} END{exit X}' FS== $here/pionic.cfg; }
 
@@ -78,18 +78,24 @@ case "${1:-start}" in
                 # Forward port 2222 from the factory to DUT's ssh
                 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 2222 -j DNAT --to $dut_ip:22
 
-                break
+                # success, launch test daemon if enabled
+                set -- $(lookup launch)
+                (($#)) || set -- show
+                [[ -x $here/launch/$1 ]] || die "Can't launch $*"
+                $here/launch/$* & disown 
+                exit
             fi
             ((SECONDS < 10)) || break
             sleep .5
         done
-
-        $0 show
+        # something wrong, fail
+	launch/show "Startup  failed" 
         ;;
 
     stop)
-        pkill -f beacon || true
-        pkill -f cgiserver || true
+        pkill $here/beacon/beacon || pkill -f beacon || true
+        pkill  $here/cgiserver || pkill -f cgiserver || true
+        launch=$(lookup launch) && [[ $launch ]] && pkill $here/launch/${launch%% *} || true
         ip a flush eth1 || true
         ip l set eth1 down || true
         iptables -F; iptables -X; iptables -t nat -F
@@ -101,31 +107,10 @@ case "${1:-start}" in
         $0 start
         ;;
 
-    show)
-        # disable console output
-	setterm --cursor off > /dev/tty1
-        echo 0 > /sys/class/vtconsole/vtcon1/bind
-	dmesg -n 1
-
-        ok=1
-        isup eth0 || ok=0; eth0_stat1=$stat1; eth0_stat2=$stat2
-        isup eth1 || ok=0; eth1_stat1=$stat1; eth1_stat2=$stat2
-        pgrep -f cgiserver &>/dev/null && cup=1 || { cup=0; ok=0; }
-        use_beacon=$(lookup use_beacon)
-        ((use_beacon)) && { pgrep -f beacon &>/dev/null && bup=1 || { bup=0; ok=0; }; }
-
-        {
-            ((ok)) && echo Test station started OK || echo TEST STATION DID NOT START
-            echo
-            echo "ETH0  : $eth0_stat1"
-            ! [[ $eth0_stat2 ]] || echo "        $eth0_stat2"
-            echo "ETH1  : $eth1_stat1"
-            ! [[ $eth1_stat2 ]] || echo "        $eth1_stat2"
-            ((cup)) && echo CGISRV: OK || echo CGISRV: NOT RUNNING
-            ((use_beacon)) && { ((bup)) && echo BEACON: OK || echo BEACON: NOT RUNNING; }
-        } | ~pi/pionic/cgi/display text fg=white point=40 $( ((ok)) && echo bg=green || echo bg=red)
+    show) 
+        $here/launch/show
         ;;
-
+    
     *) die "Usage: $0 stop|start|restart"
 esac
 true

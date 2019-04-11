@@ -1,7 +1,6 @@
 #!/bin/bash
 # Read a barcode from /dev/ttyACM0
-here=${0%/*}
-source $here/cgi.inc
+source ${0%/*}/cgi.inc
 
 [ -c /dev/ttyACM0 ] || die "No /dev/ttyAMC0, scanner not attached?"
 
