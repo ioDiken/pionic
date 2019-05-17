@@ -66,6 +66,9 @@ display
         mono        - use monospaced font (the default)
         prop        - use proportional font
         badge       - short for "size=80 align=c prop"
+        overlay     - ignore bg color, use the existing framebuffer contents as
+                      the background. I.E. superimpose new text.
+        status      - short for "overlay,align=sw"
         
     Example:
 

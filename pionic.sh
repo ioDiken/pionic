@@ -72,6 +72,8 @@ case "${1:-start}" in
         echo "Waiting for eth0 to come up"
         while true; do
             if [[ $(ipaddr eth0) ]]; then
+                ipaddr eth0
+
                 # NAT the DUT to the factory
                 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 
@@ -89,7 +91,7 @@ case "${1:-start}" in
             sleep .5
         done
         # something wrong, fail
-	launch/show "Startup  failed" 
+        $here/launch/show "Startup failed" 
         ;;
 
     stop)

@@ -28,10 +28,12 @@ if (($#)); then
             fg=?*) fg=$arg;;
             bg=?*) bg=$arg;;
             size=?*|point=?*) point=$arg;;
-	    align=?*) align=$arg;;
-	    mono*) font=$mono;;
-	    prop*) font=$prop;;
+            align=?*) align=$arg;;
+            mono*) font=$mono;;
+            prop*) font=$prop;;
             badge) point=80; align=c; font=$prop;;
+            overlay) overlay=1;;
+            status) overlay=1; align=sw;;
             *) die "Invalid option $o";;
         esac
     done
@@ -49,22 +51,28 @@ case $command in
         ;;
 
     text)
-	case $align in
-	    nw) gravity=northwest; offset="10, $point" ;;
-	    ne) gravity=northeast; offset="10, $point" ;;
-            n*) gravity=north;     offset="0,  $point" ;;			
-	    w*) gravity=west;      offset="10, $((point/2))" ;;
-	    c*) gravity=center;    offset="0,  $((point/2))" ;;
-	    e*) gravity=east;      offset="10, $((point/2))" ;;
-	    sw) gravity=southwest; offset="10, $((-point))" ;;
-	    se) gravity=southeast; offset="10, $((-point))" ;;
-	    s*)	gravity=south;     offset="0,  $((-point))" ;;
-	    *) Invalid alignment $align;;
-  	esac
+        case $align in
+            nw) gravity=northwest; offset="10,10" ;;
+            ne) gravity=northeast; offset="10,10" ;;
+            n*) gravity=north;     offset="0,10"  ;;
+            w*) gravity=west;      offset="10,0"  ;;
+            c*) gravity=center;    offset="0,0"   ;;
+            e*) gravity=east;      offset="10,0"  ;;
+            sw) gravity=southwest; offset="10,10" ;;
+            se) gravity=southeast; offset="10,10" ;;
+            s*) gravity=south;     offset="0,10"  ;;
+            *) Invalid alignment $align;;
+        esac
         tmp=$(mktemp -t display.XXXXXX)
-        trap "rm -f $tmp" EXIT
+        trap "rm -f $tmp*" EXIT
         cat > $tmp
-        $gm convert -size $size xc:$bg -fill $fg -font $font -pointsize $point -draw "gravity '$gravity' text $offset '@$tmp'" -depth 8 RGB:- | $fbput -
+        if ((overlay)); then
+            ../fbput/fbput -g $tmp.fb
+            source="-depth 8 RGB:$tmp.fb"
+        else
+            source="xc:$bg"
+        fi
+        $gm convert -size $size $source -fill $fg -font $font -pointsize $point -draw "gravity $gravity text $offset '@$tmp'" -depth 8 RGB:- | $fbput -
         ;;
 
     *) die "Invalid command $command";;
