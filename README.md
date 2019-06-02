@@ -1,25 +1,29 @@
-Pionic - an RPI-based factory test station controller
+Pionic - PI-based Networked Instrument Controller
 
 Physical configuration:
 
-    USB network adapter attaches to DUT, gets address 172.31.255.1.  The DUT
-    will take 172.31.255.2 and set pionic as the gateway. If necessary it can
-    also set a static MAC address, since one may not yet have been assigned. 
+    The network interface connects to the factory subnet and receives an
+    address via DHCP. The DHCP server is configured to assign a specific IP
+    address for the PI's MAC, presumably correlates to the test station ID.
 
-    The ethernet attaches to factory, expects address assigned by DHCP.
-    Especially, the factory server is on the factory interface.
+    A USB ethernet dongle attaches to the DUT and gets a static IP (defined in pionic.cfg).
 
-    40-pin connector attaches to optional test hardware.
+    The 40-pin I/O connector attaches to test instrumentation, which is customqqqqqqqqized for
+    the specific test station requires and not in scope of this document.
 
 Pionic provides:
 
-    NAT translation from the DUT to the factory/factory server. Also, ssh to
-    port 2222 on the factory interface will be forwarded to DUT port 22.
+    NAT translation from the DUT to the factory subnet. SSH to port 2222 on the
+    factory interface is forwarded to DUT port 22.
 
-    Transmit beacon packet every second on the DUT interface, DUT listens for
-    this at boot. If detected, it brings up static IP and attempts to download
-    diagnostic tarball from the factory server. Note the beacon payload specifies
-    the address and port of the factory server, e.g. "10.2.3.4:80".
+    If enabled in pionic.cfg, the beacon server is started on the DUT
+    interface, this transmits "beacon ethernet packets. The DUT listens for
+    beacons during boot, if detected then it enters factory diagnostic mode and
+    brings up pre-defined static IP in the same subnet.
+
+    Alternatively if the DUT will automatically bring up static IP during
+    boot, it can simply attempt to access Pionic's CGI server, and if a
+    response is received then it enters diagnostic mode.
 
     Access to test-specific CGI's on port 80, the DUT uses curl e.g.:
 
