@@ -29,7 +29,7 @@ time=30
     *) exit 1 # die "$usage"
 esac; done    
 
-pkill -f ${xmit##*/} || true
+pkill -f ${fm_transmitter##*/} || true
 if ((time)); then
     echo "Transmitting $tone Hz on $freq MHz FM for $time seconds"
     # close popen'd stdio or cgiserver will stall
